@@ -4,7 +4,7 @@ import {
   retry,
 } from "https://esm.sh/cockatiel@3.1.1?target=es2019";
 import { HttpError } from "./http.ts";
-import { fetcher } from "$live/fetch/mod.ts";
+import { fetch } from "$live/fetch/mod.ts";
 
 // this error is thrown by deno deploy when the connection is closed by the server.
 // check the discussion at discord: https://discord.com/channels/985687648595243068/1107104244517048320/1107111259813466192
@@ -38,9 +38,7 @@ export const fetchSafe = async (
   input: string | Request | URL,
   init?: DecoRequestInit,
 ) => {
-  const response = await retryExceptionOr500.execute(() =>
-    fetcher(input, init)
-  );
+  const response = await retryExceptionOr500.execute(() => fetch(input, init));
 
   if (response.ok) {
     return response;
