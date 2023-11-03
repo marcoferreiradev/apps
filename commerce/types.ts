@@ -31,10 +31,19 @@ export interface Thing {
   subjectOf?: string;
   /** URL of the item. */
   url?: string;
+  /** An video of the item. This can be a {@link https://schema.org/URL URL} or a fully described {@link https://schema.org/VideoObject VideoObject}. */
+  video?: VideoObject[];
 }
 
 export interface ImageObject extends Omit<Thing, "@type"> {
   "@type": "ImageObject";
+}
+export interface VideoObject extends Omit<Thing, "@type"> {
+  "@type": "VideoObject";
+  "description"?: string;
+  duration?: string;
+  name?: string;
+  thumbnail?: string;
 }
 
 export interface PropertyValue extends Omit<Thing, "@type"> {
@@ -398,6 +407,7 @@ export interface Product extends Omit<Thing, "@type"> {
   sku: string;
   /** A pointer to another product (or multiple products) for which this product is an accessory or spare part. */
   isAccessoryOrSparePartFor?: ProductLeaf[];
+  customData: Thing[];
 }
 
 export interface ListItem<T = string> extends Omit<Thing, "@type"> {

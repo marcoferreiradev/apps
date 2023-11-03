@@ -10,6 +10,7 @@ const compatibilityApps = [{
 
 const config = {
   apps: [
+    app("feed-shop"),
     app("implementation"),
     app("weather"),
     {
