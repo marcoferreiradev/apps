@@ -10,7 +10,7 @@ const getCollectionIds = (product: Product) =>
   );
 
 /**
- * @title Opiniões verificadas - Ratings for Products[]
+ * @title Feed shop - Videos for Products[]
  */
 export default function productList(
   _config: unknown,

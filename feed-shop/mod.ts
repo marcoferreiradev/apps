@@ -20,7 +20,7 @@ export interface VideoProps {
 // deno-lint-ignore ban-types
 export interface ConfigShopFeed {
   /**
-   * @title Adicione videos aos seus produtos exclusivos
+   * @title Adicionar videos
    */
   videosForProduct: VideoProps[];
   /**
