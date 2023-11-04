@@ -30,6 +30,7 @@ export default function productList(
 
     return products.map((product) => {
       const productId = getProductId(product);
+      console.log("ProductID ->", productId);
       const possibleCollections = getCollectionIds(product);
       const teste = {
         collectionId: () =>
@@ -38,6 +39,7 @@ export default function productList(
       } as const;
 
       const additionalData = teste[ctx.filterFor]();
+      const customData = product.customData ?? [];
 
       if (!additionalData) {
         return {
@@ -47,7 +49,7 @@ export default function productList(
 
       return {
         ...product,
-        customData: [...product.customData, additionalData],
+        customData: [...customData, additionalData],
       };
     });
   };

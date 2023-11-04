@@ -1,4 +1,4 @@
-import type { App, AppContext as AC } from "deco/mod.ts";
+import type { AppContext as AC, App } from "deco/mod.ts";
 import type { ImageWidget, VideoWidget } from "../admin/widgets.ts";
 import manifest, { Manifest } from "./manifest.gen.ts";
 
@@ -15,6 +15,7 @@ export interface VideoProps {
    * @title Thumbnaild o video
    */
   thumbnailVideo: ImageWidget;
+  label: string;
 }
 
 // deno-lint-ignore ban-types
