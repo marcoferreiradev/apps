@@ -2,8 +2,9 @@ import { setCookie } from "std/http/mod.ts";
 import { AppContext } from "../mod.ts";
 import type { Segment } from "./types.ts";
 import { removeNonLatin1Chars } from "../../utils/normalize.ts";
+// import { parseCookie } from "./vtexId.ts";
 
-const SEGMENT_COOKIE_NAME = "vtex_segment";
+export const SEGMENT_COOKIE_NAME = "vtex_segment";
 const SALES_CHANNEL_COOKIE = "VTEXSC";
 const SEGMENT = Symbol("segment");
 const ORDER_FORM_ID = Symbol("orderFormId");
@@ -76,6 +77,37 @@ export const setOrderFormIdInBag = (
   ctx: AppContext,
   orderFormId: Promise<string | undefined>,
 ) => ctx?.bag?.set(ORDER_FORM_ID, orderFormId);
+
+/**
+ * Creates a stable cache key from segment that only includes business-critical fields.
+ * Excludes marketing/tracking parameters (UTM, UTMI) to prevent cache fragmentation.
+ *
+ * Use this for cacheKey generation instead of the full segment token.
+ */
+export const getSegmentCacheKeyWithoutUTM = (ctx: AppContext): string => {
+  const segment = getSegmentFromBag(ctx)?.payload;
+
+  if (!segment) {
+    return "";
+  }
+
+  // Only include fields that affect pricing, inventory, or content
+  const cacheRelevantSegment = {
+    campaigns: segment.campaigns, // VTEX campaigns (can affect pricing)
+    channel: segment.channel, // Sales channel (affects inventory/pricing)
+    priceTables: segment.priceTables, // Price tables (affects pricing)
+    regionId: segment.regionId, // Region (can affect pricing/inventory)
+    currencyCode: segment.currencyCode, // Currency
+    cultureInfo: segment.cultureInfo, // Locale/language
+    countryCode: segment.countryCode, // Country
+    channelPrivacy: segment.channelPrivacy, // Privacy settings
+    // EXCLUDED: utm_campaign, utm_source, utm_medium (marketing only)
+    // EXCLUDED: utmi_campaign, utmi_page, utmi_part (VTEX tracking only)
+  };
+
+  // Stable serialization for consistent cache keys
+  return btoa(JSON.stringify(cacheRelevantSegment));
+};
 /**
  * Stable serialization.
  *
@@ -122,7 +154,7 @@ const serialize = ({
   return btoa(JSON.stringify(seg));
 };
 
-const parse = (cookie: string) => JSON.parse(atob(cookie));
+export const parse = (cookie: string) => JSON.parse(atob(cookie));
 
 const SEGMENT_QUERY_PARAMS = [
   "utmi_campaign" as const,
@@ -173,12 +205,12 @@ export const setSegmentBag = (
   ctx: AppContext,
 ) => {
   const vtex_segment = cookies[SEGMENT_COOKIE_NAME];
-  const segmentFromCookie = vtex_segment && parse(vtex_segment);
+  const segmentFromCookie = vtex_segment ? parse(vtex_segment) : null;
+
   const segmentFromSalesChannelCookie = cookies[SALES_CHANNEL_COOKIE]
-    ? {
-      channel: cookies[SALES_CHANNEL_COOKIE]?.split("=")[1],
-    }
+    ? { channel: cookies[SALES_CHANNEL_COOKIE]?.split("=")[1] }
     : {};
+
   const segmentFromRequest = buildSegmentFromRequest(req);
 
   const segment = {
@@ -189,10 +221,10 @@ export const setSegmentBag = (
     ...segmentFromSalesChannelCookie,
     ...segmentFromRequest,
   };
+
   const token = serialize(segment);
   setSegmentInBag(ctx, { payload: segment, token });
 
-  // If the user came from a sales channel in the URL, we set the cookie
   if (segmentFromRequest.channel) {
     setCookie(ctx.response.headers, {
       value: `sc=${segmentFromRequest.channel}`,
@@ -202,7 +234,6 @@ export const setSegmentBag = (
     });
   }
 
-  // Avoid setting cookie when segment from request matches the one generated
   if (vtex_segment !== token) {
     setCookie(ctx.response.headers, {
       value: token,
